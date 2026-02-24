@@ -16,7 +16,7 @@ export function Header() {
           {categories.map((cat) => (
             <Link
               key={cat.slug}
-              href={`/category/${cat.slug}`}
+              href={`/articles?category=${cat.slug}`}
               className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
             >
               {cat.name}
@@ -25,9 +25,9 @@ export function Header() {
         </nav>
         <div className="flex items-center gap-4">
           <Link
-            href="/search"
+            href="/articles"
             className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
-            aria-label="Search"
+            aria-label="Search articles"
           >
             Search
           </Link>

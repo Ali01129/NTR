@@ -1,5 +1,39 @@
 import type { Article, Category } from "@/types";
 
+/** All unique articles from every section, sorted by publishedAt descending */
+export function getAllArticles(): Article[] {
+  const byId = new Map<string, Article>();
+  const add = (a: Article) => byId.set(a.id, a);
+  featuredArticles.forEach(add);
+  popularArticles.forEach(add);
+  topicSection.articles.forEach(add);
+  latestArticles.forEach(add);
+  return Array.from(byId.values()).sort(
+    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  );
+}
+
+/** Get a single article by slug, or null if not found */
+export function getArticleBySlug(slug: string): Article | null {
+  const all = getAllArticles();
+  const normalized = slug.trim().toLowerCase();
+  return all.find((a) => a.slug.toLowerCase() === normalized) ?? null;
+}
+
+/** Get articles in the same category, optionally excluding one by id and limiting count */
+export function getArticlesByCategory(
+  categorySlug: string,
+  options?: { excludeId?: string; limit?: number }
+): Article[] {
+  const all = getAllArticles();
+  const slug = categorySlug.trim().toLowerCase();
+  const excludeId = options?.excludeId;
+  const limit = options?.limit ?? 6;
+  return all
+    .filter((a) => a.categorySlug.toLowerCase() === slug && a.id !== excludeId)
+    .slice(0, limit);
+}
+
 export const categories: Category[] = [
   { name: "Movies", slug: "movies" },
   { name: "TV", slug: "tv" },
@@ -134,7 +168,7 @@ export const topicSection = {
   title: "Deep Dives",
   subtitle: "Explore in-depth features and long reads.",
   linkLabel: "See More",
-  linkHref: "/category/features",
+  linkHref: "/articles",
   articles: [
     {
       id: "10",
