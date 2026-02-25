@@ -4,7 +4,7 @@ import { getTrendingTopicsFromAI, generateArticleFromPromptInternal } from "@/ap
 import { ALLOWED_CATEGORIES } from "@/lib/article-categories";
 import { createArticle } from "@/data/articles";
 
-export async function POST() {
+async function runGenerateTrendingArticles() {
   const topics = await getTrendingTopicsFromAI();
   if (!topics) {
     return NextResponse.json(
@@ -88,4 +88,12 @@ export async function POST() {
         ? `Created ${created.length} articles.`
         : `Created ${created.length} articles; ${failed.length} failed.`,
   });
+}
+
+export async function GET() {
+  return runGenerateTrendingArticles();
+}
+
+export async function POST() {
+  return runGenerateTrendingArticles();
 }
