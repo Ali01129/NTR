@@ -108,11 +108,20 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                     }
                     return [trimmed];
                   })
-                  .map((paragraph, i) => (
-                    <p key={i} className="leading-relaxed">
-                      {paragraph}
-                    </p>
-                  ))}
+                  .map((block, i) =>
+                    block.startsWith("## ") ? (
+                      <h2
+                        key={i}
+                        className="mt-6 text-xl font-bold text-zinc-900 dark:text-white first:mt-0"
+                      >
+                        {block.replace(/^##\s*/, "").trim()}
+                      </h2>
+                    ) : (
+                      <p key={i} className="leading-relaxed">
+                        {block}
+                      </p>
+                    )
+                  )}
               </div>
             )}
           </div>

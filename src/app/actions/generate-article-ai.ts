@@ -1,8 +1,7 @@
 "use server";
 
 import { isAdminLoggedIn } from "@/lib/auth-admin";
-
-const ALLOWED_CATEGORIES = ["Movies", "TV", "Gaming", "Tech", "Culture"];
+import { ALLOWED_CATEGORIES } from "@/lib/article-categories";
 
 const AUTHOR_NAME = "ntr";
 
@@ -27,7 +26,7 @@ const SYSTEM_PROMPT = `You are an assistant that generates article metadata and 
 - slug: URL-friendly slug (lowercase, hyphens, e.g. "my-article-title")
 - title: article title
 - excerpt: short summary (1-3 sentences)
-- body: full article text with 6–8 distinct paragraphs. CRITICAL: separate each paragraph with exactly one blank line (double newline \\n\\n). Do NOT output one long paragraph. Example format: "First paragraph text.\\n\\nSecond paragraph text.\\n\\nThird paragraph text." No markdown.
+- body: full article text with 6–8 distinct paragraphs AND 2–4 section headings. CRITICAL: Put each heading on its own line starting with ## followed by a space (e.g. "## Key Takeaways" or "## The Verdict"). Separate paragraphs and heading lines with exactly one blank line (double newline \\n\\n). Include headings to structure the article (e.g. after intro, before key sections). Example: "First paragraph.\\n\\n## Main Points\\n\\nSecond paragraph.\\n\\n## Conclusion\\n\\nFinal paragraph." No other markdown.
 - category: must be exactly one of: Movies, TV, Gaming, Tech, Culture
 - imageKeywords: 2-4 comma-separated English keywords that describe a photo that would fit this article (e.g. "sci-fi movie, cinema, space" or "gaming, controller, screen"). Used to fetch a topic-related image. No spaces after commas.
 - imageAlt: short description of the image for accessibility (what the image shows)
@@ -50,7 +49,30 @@ function normalizeCategory(category: string): string {
   return match ?? ALLOWED_CATEGORIES[0];
 }
 
-function parseAndValidate(content: string): GeneratedArticleData | null {
+/** Fetch first image URL from Pixabay for a search term. */
+async function fetchPixabayImage(
+  apiKey: string,
+  q: string
+): Promise<string | null> {
+  const query = q.replace(/\s*,\s*/g, " ").trim().slice(0, 100);
+  if (!query) return null;
+  const url = `https://pixabay.com/api/?key=${encodeURIComponent(apiKey)}&q=${encodeURIComponent(query)}&per_page=3`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      hits?: Array<{ largeImageURL?: string; webformatURL?: string }>;
+    };
+    const first = data.hits?.[0];
+    return first?.largeImageURL ?? first?.webformatURL ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function parseAndValidate(
+  content: string
+): { data: GeneratedArticleData; imageSearchQuery: string } | null {
   try {
     let json = content.trim();
     const codeBlock = json.match(/^```(?:json)?\s*([\s\S]*?)```$/);
@@ -82,7 +104,7 @@ function parseAndValidate(content: string): GeneratedArticleData | null {
           : "5";
     if (!slug || !title || !body) return null;
     const categorySlug = category.toLowerCase().replace(/\s+/g, "-");
-    return {
+    const data: GeneratedArticleData = {
       slug: slug.replace(/\s+/g, "-").toLowerCase(),
       title,
       excerpt: excerpt || title,
@@ -94,6 +116,7 @@ function parseAndValidate(content: string): GeneratedArticleData | null {
       imageAlt,
       readTime,
     };
+    return { data, imageSearchQuery: rawKeywords };
   } catch {
     return null;
   }
@@ -101,7 +124,8 @@ function parseAndValidate(content: string): GeneratedArticleData | null {
 
 async function callOpenRouter(
   model: string,
-  prompt: string
+  prompt: string,
+  systemPrompt?: string
 ): Promise<string | null> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return null;
@@ -115,7 +139,7 @@ async function callOpenRouter(
     body: JSON.stringify({
       model,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt ?? SYSTEM_PROMPT },
         { role: "user", content: prompt },
       ],
       temperature: 0.7,
@@ -136,17 +160,13 @@ async function callOpenRouter(
   return typeof text === "string" ? text : null;
 }
 
-export async function generateArticleWithAIAction(
+/** Internal: generate article content from a prompt (no auth). Used by API/cron. */
+export async function generateArticleFromPromptInternal(
   prompt: string
 ): Promise<GenerateArticleAIState> {
-  const loggedIn = await isAdminLoggedIn();
-  if (!loggedIn) {
-    return { ok: false, error: "You must be logged in to use this feature." };
-  }
-
   const trimmed = prompt?.trim();
   if (!trimmed) {
-    return { ok: false, error: "Please enter a prompt describing the article." };
+    return { ok: false, error: "Empty prompt." };
   }
 
   const models = getModels();
@@ -169,8 +189,16 @@ export async function generateArticleWithAIAction(
   for (const model of models) {
     const content = await callOpenRouter(model, trimmed);
     if (content) {
-      const data = parseAndValidate(content);
-      if (data) return { ok: true, data };
+      const parsed = parseAndValidate(content);
+      if (parsed) {
+        const { data, imageSearchQuery } = parsed;
+        const pixabayKey = process.env.PIXABAY_API_KEY?.trim();
+        if (pixabayKey && imageSearchQuery) {
+          const pixabayUrl = await fetchPixabayImage(pixabayKey, imageSearchQuery);
+          if (pixabayUrl) data.image = pixabayUrl;
+        }
+        return { ok: true, data };
+      }
       lastError = "Model returned invalid or incomplete JSON.";
     } else {
       lastError = `Model ${model} failed or returned no content.`;
@@ -181,4 +209,55 @@ export async function generateArticleWithAIAction(
     ok: false,
     error: lastError ?? "All models failed. Try again or check your API key and OPENROUTER_MODELS.",
   };
+}
+
+export async function generateArticleWithAIAction(
+  prompt: string
+): Promise<GenerateArticleAIState> {
+  const loggedIn = await isAdminLoggedIn();
+  if (!loggedIn) {
+    return { ok: false, error: "You must be logged in to use this feature." };
+  }
+  return generateArticleFromPromptInternal(prompt);
+}
+
+/** Fetch one trending topic per category from AI (for API/cron). */
+const TRENDING_TOPICS_SYSTEM = `You are an assistant that suggests current, trending topics for short articles. Respond with ONLY a valid JSON object—no markdown, no explanation. Use exactly these keys (each value is a string, one specific topic to write about):
+- Movies: one trending movie-related topic (e.g. a new release, a controversy, a milestone)
+- TV: one trending TV topic (show, streaming, industry)
+- Gaming: one trending gaming topic (game, platform, esports)
+- Tech: one trending tech topic (product, company, trend)
+- Culture: one trending culture topic (internet, social, viral)
+Topics should be current and specific enough to write a single engaging article. Vary them each time; do not repeat the same suggestions.`;
+
+export async function getTrendingTopicsFromAI(): Promise<
+  { [K in (typeof ALLOWED_CATEGORIES)[number]]: string } | null
+> {
+  const models = getModels();
+  if (models.length === 0 || !process.env.OPENROUTER_API_KEY) return null;
+
+  const userPrompt =
+    "Give me one trending topic for each category right now. Return only the JSON object.";
+
+  for (const model of models) {
+    const content = await callOpenRouter(model, userPrompt, TRENDING_TOPICS_SYSTEM);
+    if (!content) continue;
+    try {
+      let json = content.trim();
+      const codeBlock = json.match(/^```(?:json)?\s*([\s\S]*?)```$/);
+      if (codeBlock) json = codeBlock[1].trim();
+      const obj = JSON.parse(json) as Record<string, unknown>;
+      const out: Record<string, string> = {};
+      for (const cat of ALLOWED_CATEGORIES) {
+        const v = obj[cat];
+        if (typeof v === "string" && v.trim()) out[cat] = v.trim();
+      }
+      if (Object.keys(out).length === ALLOWED_CATEGORIES.length) {
+        return out as { [K in (typeof ALLOWED_CATEGORIES)[number]]: string };
+      }
+    } catch {
+      // try next model
+    }
+  }
+  return null;
 }

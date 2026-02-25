@@ -93,11 +93,20 @@ export function ArticlePreview({ data }: { data: PreviewData }) {
                 }
                 return [trimmed];
               })
-              .map((paragraph, i) => (
-                <p key={i} className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                  {paragraph}
-                </p>
-              ))}
+              .map((block, i) =>
+                block.startsWith("## ") ? (
+                  <h2
+                    key={i}
+                    className="mt-3 text-base font-bold text-zinc-900 dark:text-white first:mt-0"
+                  >
+                    {block.replace(/^##\s*/, "").trim()}
+                  </h2>
+                ) : (
+                  <p key={i} className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    {block}
+                  </p>
+                )
+              )}
           </div>
         ) : (
           <p className="mt-4 text-sm italic text-zinc-400 dark:text-zinc-500">Article body will appear here.</p>
