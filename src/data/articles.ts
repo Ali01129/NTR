@@ -1,6 +1,6 @@
 import type { Article, Category } from "@/types";
 import type { ArticleRow } from "@/types/database";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase/server";
+import { supabase, supabaseAdmin, isSupabaseConfigured, isSupabaseAdminConfigured } from "@/lib/supabase/server";
 import {
   getAllArticles as getDummyAll,
   getArticleBySlug as getDummyBySlug,
@@ -125,10 +125,10 @@ export type CreateArticleInput = {
 };
 
 export async function createArticle(input: CreateArticleInput): Promise<{ ok: true; article: Article } | { ok: false; error: string }> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: "Supabase is not configured" };
+  if (!isSupabaseAdminConfigured() || !supabaseAdmin) {
+    return { ok: false, error: "Supabase admin (service role) is not configured. Set SUPABASE_SERVICE_ROLE_KEY for admin create." };
   }
-  const { error, data } = await supabase
+  const { error, data } = await supabaseAdmin
     .from("articles")
     .insert({
       slug: input.slug.trim(),
@@ -171,10 +171,10 @@ export async function updateArticle(
   id: string,
   input: UpdateArticleInput
 ): Promise<{ ok: true; article: Article } | { ok: false; error: string }> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: "Supabase is not configured" };
+  if (!isSupabaseAdminConfigured() || !supabaseAdmin) {
+    return { ok: false, error: "Supabase admin (service role) is not configured. Set SUPABASE_SERVICE_ROLE_KEY for admin update." };
   }
-  const { error, data } = await supabase
+  const { error, data } = await supabaseAdmin
     .from("articles")
     .update({
       slug: input.slug.trim(),
@@ -192,9 +192,12 @@ export async function updateArticle(
     })
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
   if (error) {
     return { ok: false, error: error.message };
+  }
+  if (!data) {
+    return { ok: false, error: "No row was updated. The article may not exist." };
   }
   return { ok: true, article: rowToArticle(data as ArticleRow) };
 }
