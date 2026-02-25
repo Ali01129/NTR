@@ -23,6 +23,7 @@ function articleToPreviewData(a: Article): PreviewData {
     excerpt: a.excerpt,
     body: a.body ?? "",
     category: a.category,
+    categorySlug: a.categorySlug ?? "",
     author: a.author,
     image: a.image,
     imageAlt: a.imageAlt ?? "",
