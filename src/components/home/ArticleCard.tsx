@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Article } from "@/types";
 
@@ -28,12 +27,11 @@ export function ArticleCard({ article, size = "default", showExcerpt = true }: A
             isLarge ? "aspect-[16/10]" : isSmall ? "aspect-video" : "aspect-video"
           }`}
         >
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={article.image}
             alt={article.imageAlt ?? article.title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes={isLarge ? "(min-width: 1024px) 800px, 100vw" : "(min-width: 768px) 50vw, 100vw"}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
           {article.readTime && (
             <span className="absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 text-xs text-white">

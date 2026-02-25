@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { ArticleCard } from "@/components/home/ArticleCard";
-import { getArticleBySlug, getArticlesByCategory } from "@/data/dummy";
+import { getArticleBySlug, getArticlesByCategory } from "@/data/articles";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
 import type { Metadata } from "next";
 
@@ -23,7 +22,7 @@ interface ArticlePageProps {
 
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await getArticleBySlug(slug);
   if (!article) return { title: "Article Not Found" };
   const url = `${SITE_URL}/article/${article.slug}`;
   return {
@@ -49,10 +48,10 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const recommendations = getArticlesByCategory(article.categorySlug, {
+  const recommendations = await getArticlesByCategory(article.categorySlug, {
     excludeId: article.id,
     limit: 3,
   });
@@ -82,13 +81,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           </header>
 
           <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={article.image}
               alt={article.imageAlt ?? article.title}
-              fill
-              className="object-cover"
-              sizes="(min-width: 1024px) 896px, 100vw"
-              priority
+              className="absolute inset-0 h-full w-full object-cover"
             />
           </div>
 
@@ -100,9 +97,29 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             <p className="text-lg leading-relaxed text-zinc-700 dark:text-zinc-300">
               {article.excerpt}
             </p>
-            <p className="mt-6 text-zinc-600 dark:text-zinc-400">
-              Full article content would appear here. This is a placeholder for the full story.
-            </p>
+            {article.body && (
+              <div className="mt-6 space-y-4 text-zinc-700 dark:text-zinc-300">
+                {article.body
+                  .split(/\n\n+/)
+                  .flatMap((block) => {
+                    const trimmed = block.trim();
+                    if (!trimmed) return [];
+                    // If one long block with single newlines, split on \n (AI may use single newlines between paragraphs)
+                    if (trimmed.length > 300 && trimmed.includes("\n")) {
+                      return trimmed
+                        .split(/\n/)
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                    }
+                    return [trimmed];
+                  })
+                  .map((paragraph, i) => (
+                    <p key={i} className="leading-relaxed">
+                      {paragraph}
+                    </p>
+                  ))}
+              </div>
+            )}
           </div>
 
           <div className="mt-10">

@@ -7,12 +7,7 @@ import { LatestArticles } from "@/components/home/LatestArticles";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { AdSlotRow } from "@/components/ads/AdSlotRow";
 import { JsonLd } from "@/components/seo/JsonLd";
-import {
-  featuredArticles,
-  popularArticles,
-  topicSection,
-  latestArticles,
-} from "@/data/dummy";
+import { getAllArticles } from "@/data/articles";
 import {
   SITE_NAME,
   SITE_TAGLINE,
@@ -83,7 +78,7 @@ export const metadata: Metadata = {
   },
 };
 
-function getHomePageJsonLd() {
+function getHomePageJsonLd(featuredArticles: { slug: string; title: string }[]) {
   const articleListItems = featuredArticles
     .slice(0, 5)
     .map((article, index) => ({
@@ -138,8 +133,54 @@ function getHomePageJsonLd() {
   };
 }
 
-export default function Home() {
-  const jsonLd = getHomePageJsonLd();
+function distributeArticles(articles: Awaited<ReturnType<typeof getAllArticles>>) {
+  const n = articles.length;
+  if (n <= 5) {
+    return {
+      featured: articles.slice(0, 5),
+      popular: articles.slice(0, Math.min(4, n)),
+      deepDives: articles.slice(0, Math.min(3, n)),
+      latest: articles.slice(0, Math.min(6, n)),
+    };
+  }
+  if (n <= 9) {
+    return {
+      featured: articles.slice(0, 5),
+      popular: articles.slice(5, 9),
+      deepDives: articles.slice(5, Math.min(8, n)),
+      latest: articles.slice(5, n),
+    };
+  }
+  if (n <= 12) {
+    return {
+      featured: articles.slice(0, 5),
+      popular: articles.slice(5, 9),
+      deepDives: articles.slice(9, 12),
+      latest: articles.slice(9, n),
+    };
+  }
+  return {
+    featured: articles.slice(0, 5),
+    popular: articles.slice(5, 9),
+    deepDives: articles.slice(9, 12),
+    latest: articles.slice(12, 18),
+  };
+}
+
+export default async function Home() {
+  const all = await getAllArticles();
+  const { featured, popular, deepDives, latest } = distributeArticles(all);
+  const featuredArticles = featured;
+  const popularArticles = popular;
+  const topicSection = {
+    title: "Deep Dives",
+    subtitle: "Explore in-depth features and long reads.",
+    linkLabel: "See More",
+    linkHref: "/articles",
+    articles: deepDives,
+  };
+  const latestArticles = latest;
+  const jsonLd = getHomePageJsonLd(featuredArticles);
 
   return (
     <>

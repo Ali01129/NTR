@@ -1,13 +1,10 @@
 import { SITE_URL } from "@/lib/constants";
-import { featuredArticles, latestArticles, popularArticles } from "@/data/dummy";
+import { getAllArticles } from "@/data/articles";
 import type { MetadataRoute } from "next";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const articleSlugs = [
-    ...featuredArticles,
-    ...latestArticles,
-    ...popularArticles,
-  ].map((a) => a.slug);
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const all = await getAllArticles();
+  const articleSlugs = all.map((a) => a.slug);
 
   const articleUrls = articleSlugs.map((slug) => ({
     url: `${SITE_URL}/article/${slug}`,

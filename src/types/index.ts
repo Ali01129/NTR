@@ -11,6 +11,7 @@ export interface Article {
   imageAlt?: string;
   featured?: boolean;
   readTime?: number; // minutes
+  body?: string; // full article text
 }
 
 export interface Category {

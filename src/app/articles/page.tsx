@@ -2,7 +2,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ArticleCard } from "@/components/home/ArticleCard";
 import { AdSlot } from "@/components/ads/AdSlot";
-import { getAllArticles, categories } from "@/data/dummy";
+import { getAllArticles, getCategories } from "@/data/articles";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
 import type { Article } from "@/types";
 import type { Metadata } from "next";
@@ -10,7 +10,8 @@ import Link from "next/link";
 
 export async function generateMetadata({ searchParams }: ArticlesPageProps): Promise<Metadata> {
   const { category: categorySlug } = await searchParams;
-  const categoryName = categorySlug ? getCategoryName(categorySlug) : null;
+  const categories = await getCategories();
+  const categoryName = categorySlug ? getCategoryName(categories, categorySlug) : null;
   const title = categoryName ? `${categoryName} Articles` : "All Articles";
   const description = categoryName
     ? `Browse ${categoryName} articles on ${SITE_NAME}.`
@@ -27,7 +28,7 @@ export async function generateMetadata({ searchParams }: ArticlesPageProps): Pro
 
 const ARTICLES_PER_PAGE = 12;
 
-function getCategoryName(slug: string): string | null {
+function getCategoryName(categories: { slug: string; name: string }[], slug: string): string | null {
   const cat = categories.find((c) => c.slug === slug);
   return cat ? cat.name : null;
 }
@@ -70,9 +71,8 @@ interface ArticlesPageProps {
 export default async function ArticlesPage({ searchParams }: ArticlesPageProps) {
   const { q: query = "", page: pageParam = "1", category: categorySlug = "" } = await searchParams;
   const page = Math.max(1, parseInt(pageParam, 10) || 1);
-  const categoryName = categorySlug ? getCategoryName(categorySlug) : null;
-
-  const all = getAllArticles();
+  const [categories, all] = await Promise.all([getCategories(), getAllArticles()]);
+  const categoryName = categorySlug ? getCategoryName(categories, categorySlug) : null;
   const byCategory = filterByCategory(all, categorySlug);
   const filtered = filterBySearch(byCategory, query);
   const totalPages = Math.max(1, Math.ceil(filtered.length / ARTICLES_PER_PAGE));
