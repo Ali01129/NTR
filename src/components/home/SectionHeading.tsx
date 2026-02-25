@@ -16,9 +16,21 @@ export function SectionHeading({ id, title, linkHref, linkLabel }: SectionHeadin
       {linkHref && linkLabel && (
         <Link
           href={linkHref}
-          className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
         >
-          {linkLabel} →
+          {linkLabel}
+          <svg
+            className="h-4 w-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+            aria-hidden
+          >
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
         </Link>
       )}
     </div>

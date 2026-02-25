@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { AdSlot } from "@/components/ads/AdSlot";
 import { ArticleCard } from "@/components/home/ArticleCard";
 import { getArticleBySlug, getArticlesByCategory } from "@/data/articles";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
@@ -89,10 +88,6 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             />
           </div>
 
-          <div className="mt-6">
-            <AdSlot slotId="article-banner-below-image" size="banner" label="Advertisement" />
-          </div>
-
           <div className="mt-8 border-t border-zinc-200 pt-8 dark:border-zinc-800">
             <p className="text-lg leading-relaxed text-zinc-700 dark:text-zinc-300">
               {article.excerpt}
@@ -120,10 +115,6 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   ))}
               </div>
             )}
-          </div>
-
-          <div className="mt-10">
-            <AdSlot slotId="article-inline-1" size="banner" label="Advertisement" />
           </div>
 
           <section
@@ -160,16 +151,24 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             )}
           </section>
 
-          <div className="mt-10">
-            <AdSlot slotId="article-inline-2" size="banner" label="Advertisement" />
-          </div>
-
           <footer className="mt-10 border-t border-zinc-200 pt-8 dark:border-zinc-800">
             <Link
               href="/articles"
-              className="inline-flex items-center text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
             >
-              ← Back to {SITE_NAME} articles
+              <svg
+                className="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+                aria-hidden
+              >
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              Back to {SITE_NAME} articles
             </Link>
           </footer>
         </article>

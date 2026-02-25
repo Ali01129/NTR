@@ -4,8 +4,6 @@ import { HeroFeatured } from "@/components/home/HeroFeatured";
 import { PopularNews } from "@/components/home/PopularNews";
 import { TopicSection } from "@/components/home/TopicSection";
 import { LatestArticles } from "@/components/home/LatestArticles";
-import { AdSlot } from "@/components/ads/AdSlot";
-import { AdSlotRow } from "@/components/ads/AdSlotRow";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { getAllArticles } from "@/data/articles";
 import {
@@ -195,13 +193,14 @@ export default async function Home() {
 
             <HeroFeatured articles={featuredArticles} />
 
-            <div className="mt-12 lg:mt-16">
-              <AdSlotRow baseSlotId="home-box" label="Advertisement" />
-            </div>
+            <hr className="my-12 lg:my-16 border-zinc-200 dark:border-zinc-800" />
 
             <div className="mt-12 lg:mt-16">
               <PopularNews articles={popularArticles} />
             </div>
+
+            <hr className="my-12 lg:my-16 border-zinc-200 dark:border-zinc-800" />
+
             <div className="mt-12 lg:mt-16">
               <TopicSection
                 title={topicSection.title}
@@ -211,22 +210,11 @@ export default async function Home() {
                 articles={topicSection.articles}
               />
             </div>
-            <div className="mt-12 lg:mt-16">
-              <AdSlot
-                slotId="home-banner-2"
-                size="banner"
-                label="Advertisement"
-              />
-            </div>
+
+            <hr className="my-12 lg:my-16 border-zinc-200 dark:border-zinc-800" />
+
             <div className="mt-12 lg:mt-16">
               <LatestArticles articles={latestArticles} />
-            </div>
-            <div className="mt-12 lg:mt-16">
-              <AdSlot
-              slotId="home-banner-1"
-              size="banner"
-              label="Advertisement"
-            />
             </div>
           </div>
         </main>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { categories } from "@/data/dummy";
 
 export function Header() {
@@ -7,10 +8,17 @@ export function Header() {
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white"
+          className="flex items-center"
           aria-label="NTR - Home"
         >
-          NTR
+          <Image
+            src="/NTR.svg"
+            alt="NTR"
+            width={73}
+            height={30}
+            className="h-8 w-auto invert dark:invert-0"
+            priority
+          />
         </Link>
         <nav className="hidden items-center gap-6 md:flex" aria-label="Main navigation">
           {categories.map((cat) => (

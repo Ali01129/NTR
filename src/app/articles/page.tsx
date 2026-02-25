@@ -1,7 +1,6 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ArticleCard } from "@/components/home/ArticleCard";
-import { AdSlot } from "@/components/ads/AdSlot";
 import { getAllArticles, getCategories } from "@/data/articles";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
 import type { Article } from "@/types";
@@ -123,10 +122,6 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
             </div>
           </form>
 
-          <div className="mt-8">
-            <AdSlot slotId="articles-banner-1" size="banner" label="Advertisement" />
-          </div>
-
           <section className="mt-10" aria-label="Articles list">
             {(query || categoryName) && (
               <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
@@ -147,10 +142,6 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                   {articles.map((article) => (
                     <ArticleCard key={article.id} article={article} showExcerpt />
                   ))}
-                </div>
-
-                <div className="mt-10">
-                  <AdSlot slotId="articles-banner-2" size="banner" label="Advertisement" />
                 </div>
 
                 {totalPages > 1 && (
