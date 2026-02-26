@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArticleCard } from "@/components/home/ArticleCard";
 import { getAllArticles } from "@/data/articles";
 import { SITE_NAME } from "@/lib/constants";
 
@@ -6,14 +7,6 @@ export const metadata = {
   title: "Admin Dashboard",
   description: "Site management",
 };
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 export default async function AdminDashboardPage() {
   const articles = await getAllArticles();
@@ -43,32 +36,23 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-        <div className="border-b border-zinc-200 px-5 py-4 dark:border-zinc-700">
-          <h2 className="font-semibold text-zinc-900 dark:text-white">All articles</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Click an article to view analytics and edit.</p>
-        </div>
-        <div className="max-h-[28rem] overflow-auto">
-          {articles.length === 0 ? (
-            <p className="p-5 text-sm text-zinc-500 dark:text-zinc-400">No articles yet.</p>
-          ) : (
-            <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {articles.map((a) => (
-                <li key={a.id} className="px-5 py-3">
-                  <Link
-                    href={`/admin/article/${a.slug}`}
-                    className="font-medium text-zinc-900 hover:underline dark:text-white"
-                  >
-                    {a.title}
-                  </Link>
-                  <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                    {a.category} · {formatDate(a.publishedAt)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      <div>
+        <h2 className="font-semibold text-zinc-900 dark:text-white">All articles</h2>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Click an article to view analytics and edit.</p>
+        {articles.length === 0 ? (
+          <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-400">No articles yet.</p>
+        ) : (
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {articles.map((article) => (
+              <ArticleCard
+                key={article.id}
+                article={article}
+                showExcerpt
+                href={`/admin/article/${article.slug}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <p className="text-sm text-zinc-500 dark:text-zinc-400">

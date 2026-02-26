@@ -5,6 +5,7 @@ interface ArticleCardProps {
   article: Article;
   size?: "default" | "large" | "small";
   showExcerpt?: boolean;
+  href?: string;
 }
 
 function formatDate(iso: string) {
@@ -15,13 +16,14 @@ function formatDate(iso: string) {
   });
 }
 
-export function ArticleCard({ article, size = "default", showExcerpt = true }: ArticleCardProps) {
+export function ArticleCard({ article, size = "default", showExcerpt = true, href }: ArticleCardProps) {
   const isLarge = size === "large";
   const isSmall = size === "small";
+  const linkHref = href ?? `/article/${article.slug}`;
 
   return (
     <article className="group">
-      <Link href={`/article/${article.slug}`} className="block">
+      <Link href={linkHref} className="block">
         <div
           className={`relative overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800 ${
             isLarge ? "aspect-[16/10]" : isSmall ? "aspect-video" : "aspect-video"
